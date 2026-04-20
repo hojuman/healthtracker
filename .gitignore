@@ -1,0 +1,10 @@
+.env
+.garmin_health_tokens
+__pycache__/
+*.pyc
+*.pyo
+.pytest_cache/
+*.db
+.DS_Store
+token.json
+credentials.json

@@ -1,0 +1,50 @@
+name: Daily Health Check
+
+on:
+  schedule:
+    # 8:00 AM UTC daily. Use https://crontab.guru to adjust for your timezone.
+    # Examples: 0 7 * * * = 7 AM UTC | 0 14 * * * = 6 AM US Pacific | 0 22 * * * = 8 AM AEST
+    - cron: '0 8 * * *'
+  workflow_dispatch: # Also triggerable manually from GitHub UI
+
+jobs:
+  health-check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Cache pip
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/pip
+          key: pip-${{ hashFiles('requirements.txt') }}
+
+      - name: Cache Garmin tokens
+        uses: actions/cache@v4
+        with:
+          path: ~/.garmin_health_tokens
+          key: garmin-tokens-${{ github.run_id }}
+          restore-keys: garmin-tokens-
+
+      - run: pip install -r requirements.txt
+
+      - name: Run health check
+        env:
+          GARMIN_EMAIL: ${{ secrets.GARMIN_EMAIL }}
+          GARMIN_PASSWORD: ${{ secrets.GARMIN_PASSWORD }}
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          NOTIFY_EMAIL: ${{ secrets.NOTIFY_EMAIL }}
+          SMTP_HOST: ${{ secrets.SMTP_HOST }}
+          SMTP_PORT: ${{ secrets.SMTP_PORT }}
+          SMTP_USER: ${{ secrets.SMTP_USER }}
+          SMTP_PASSWORD: ${{ secrets.SMTP_PASSWORD }}
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+          NTFY_TOPIC: ${{ secrets.NTFY_TOPIC }}
+          GOOGLE_CALENDAR_CREDENTIALS: ${{ secrets.GOOGLE_CALENDAR_CREDENTIALS }}
+          GOOGLE_CALENDAR_TOKEN: ${{ secrets.GOOGLE_CALENDAR_TOKEN }}
+          NOTIFY_ON_HEALTHY: ${{ vars.NOTIFY_ON_HEALTHY }}
+        run: python main.py
